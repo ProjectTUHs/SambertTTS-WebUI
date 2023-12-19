@@ -96,7 +96,6 @@ def train(train_step):
             }
         }
 
-        # 配置训练参数，指定数据集，临时工作目录和train_info
         kwargs = dict(
             model=pretrained_model_id,                  # 指定要finetune的模型
             model_revision = "v1.0.6",
@@ -127,28 +126,26 @@ def save_model(worked_dir,dest_dir):
     dest_dir = "/home/user/app/trained_model"
     # worked_dir: 临时工作目录
     # dest_dir: 目标存储目录
-    # 检查 worked_dir 路径内是否有文件
-    if os.listdir(worked_dir): # 如果 worked_dir 不为空
-        # 获取当前年月日时间
+    if os.listdir(worked_dir): 
+
         now = datetime.datetime.now()
-        # 格式化为字符串
+
         date_str = now.strftime("%Y%m%d%H%M%S")
-        # 拼接目标文件夹的路径
+
         dest_folder = os.path.join(dest_dir, date_str)
-        # 复制临时工作目录到目标文件夹
+
         shutil.copytree(worked_dir, dest_folder)
-        # 清除训练缓存
+
         shutil.rmtree("/home/user/app/output_training_data")
         shutil.rmtree("/home/user/app/pretrain_work_dir")
         shutil.rmtree("/home/user/app/test_wavs")
-        # 重新创建一个同名的空目录
+
         os.mkdir("/home/user/app/output_training_data")
         os.mkdir("/home/user/app/pretrain_work_dir")
         os.mkdir("/home/user/app/test_wavs")
-        # 返回模型已成功保存为模型的名称
+
         return f"模型已成功保存为 {date_str}"
-    else: # 如果 worked_dir 为空
-        # 返回保存失败，模型已保存或已被清除
+    else: 
         return "保存失败，模型已保存或已被清除"
 
 
@@ -184,45 +181,43 @@ def infer(text):
   inference = pipeline(task=Tasks.text_to_speech, model=model_id)
   output = inference(input=text) 
 
-  # 生成文件名
+
   now = datetime.datetime.now()
   date_str = now.strftime("%Y%m%d%H%M%S")
   rand_num = random.randint(1000, 9999)
   filename = date_str + str(rand_num)
   
-  # 保存未降噪的音频文件
+
   with open(filename + "0.wav", mode='bx') as f:
       f.write(output["output_wav"])
 
-  #使用傅里叶变换降噪
 
-  # 读取音频文件
   y, sr = librosa.load(filename + "0.wav")
-  # 计算短时傅里叶变换
+
   S = librosa.stft(y)
-  # 计算噪声的均值和标准差
+
   noise = S[np.abs(S) < np.percentile(S, 95)]
   noise_mean, noise_std = np.mean(noise), np.std(noise)
-  # 创建滤波器
+
   filter_ = np.ones_like(S)
   filter_[np.abs(S) < noise_mean + 2 * noise_std] = 0
-  # 应用滤波器
+
   filtered_S = filter_ * S
-  # 反转傅里叶变换
+
   filtered_y = librosa.istft(filtered_S)
-  # 保存降噪后的音频文件
+
   sf.write(filename + "testfile.wav", filtered_y, sr)
 
-  # 删除未降噪的文件
+
   os.remove(filename + "0.wav")
 
-  # 返回降噪后的音频文件名
+
   return filename + "testfile.wav"
 
 
 def infer_custom(model_name, text, noise_level): 
 
-  custom_model_dir = os.path.join("/home/user/app/trained_model/", model_name) # 修改模型目录为用户指定的目录
+  custom_model_dir = os.path.join("/home/user/app/trained_model/", model_name) 
 
   custom_infer_abs = {
       'voice_name':
@@ -248,60 +243,56 @@ def infer_custom(model_name, text, noise_level):
   inference = pipeline(task=Tasks.text_to_speech, model=model_id)
   output = inference(input=text)
 
-  # 生成文件名
+
   now = datetime.datetime.now()
   date_str = now.strftime("%Y%m%d%H%M%S")
   rand_num = random.randint(1000, 9999)
   filename = date_str + str(rand_num)
 
-  # 保存未降噪的音频文件
+
   with open(filename + ".wav", mode='bx') as f:
       f.write(output["output_wav"])
 
-  #使用傅里叶变换降噪
 
-  # 读取音频文件
+
+
   y, sr = librosa.load(filename + ".wav")
-  # 计算短时傅里叶变换
+
   S = librosa.stft(y)
-  # 计算噪声的均值和标准差
+
   noise = S[np.abs(S) < np.percentile(S, 95)]
   noise_mean, noise_std = np.mean(noise), np.std(noise)
-  # 创建滤波器
+
   filter_ = np.ones_like(S)
   filter_[np.abs(S) < noise_mean + noise_level * noise_std] = 0
-  # 应用滤波器
+
   filtered_S = filter_ * S
-  # 反转傅里叶变换
+
   filtered_y = librosa.istft(filtered_S)
-  # 保存降噪后的音频文件
+
   sf.write(filename + "customfile.wav", filtered_y, sr)
 
-  # 删除未降噪的文件
   os.remove(filename + ".wav")
 
   return filename + "customfile.wav"
 
 
-# 已训练模型的路径trained_model
+
 trained_model = "/home/user/app/trained_model/"
 
 
-# 刷新模型列表下拉菜单
 def update_model_dropdown(inp3):
-    # 获取 trained_model 文件夹中的模型列表
+
     model_list = os.listdir(trained_model)
-    # 返回 gr.Dropdown.update 方法，传入新的选项列表
+
     return gr.Dropdown(choices=model_list, value=inp3)
 
 
-# 模型重命名
 def rename_model(old_name, new_name):
-    # 检查模型名称
+
     if not os.path.isdir(os.path.join(trained_model, old_name)):
         return "模型名称不存在，请重新输入！"
     else:
-        # 重命名模型文件夹
         try:
             os.rename(os.path.join(trained_model, old_name), os.path.join(trained_model, new_name))
             return "模型重命名成功！"
@@ -311,11 +302,10 @@ def rename_model(old_name, new_name):
 
 # 清除训练缓存
 def clear_cache(a):
-    # 删除目录及其所有内容
     shutil.rmtree("/home/user/app/output_training_data")
     shutil.rmtree("/home/user/app/pretrain_work_dir")
     shutil.rmtree("/home/user/app/test_wavs")
-    # 重新创建一个同名的空目录
+
     os.mkdir("/home/user/app/output_training_data")
     os.mkdir("/home/user/app/pretrain_work_dir")
     os.mkdir("/home/user/app/test_wavs")
@@ -325,7 +315,6 @@ def clear_cache(a):
 from textwrap import dedent
 
 
-# FRCRN语音降噪算法
 
 def FRCRN_De_Noise(noise_wav, noisemic_wav):
   
@@ -338,7 +327,6 @@ def FRCRN_De_Noise(noise_wav, noisemic_wav):
     Tasks.acoustic_noise_suppression,
     model='/home/yiho/Personal-TTS-v3/damo/speech_frcrn_ans_cirm_16k')
 
-  # 生成文件名
   now = datetime.datetime.now()
   date_str = now.strftime("%Y%m%d%H%M%S")
   rand_num = random.randint(1000, 9999)
@@ -350,34 +338,32 @@ def FRCRN_De_Noise(noise_wav, noisemic_wav):
   
   return filename + "AIdenoise.wav"
 
-#使用傅里叶变换降噪
 def Normal_De_Noise(noise_wav, noisemic_wav, noise_level):
   if noisemic_wav is not None:
       noise_audio = noisemic_wav
   else:
       noise_audio = noise_wav
   
-    # 生成文件名
   now = datetime.datetime.now()
   date_str = now.strftime("%Y%m%d%H%M%S")
   rand_num = random.randint(1000, 9999)
   filename = date_str + str(rand_num)
 
-    # 读取音频文件
+
   y, sr = librosa.load(noise_audio)
-    # 计算短时傅里叶变换
+
   S = librosa.stft(y)
-    # 计算噪声的均值和标准差
+
   noise = S[np.abs(S) < np.percentile(S, 95)]
   noise_mean, noise_std = np.mean(noise), np.std(noise)
-    # 创建滤波器
+
   filter_ = np.ones_like(S)
   filter_[np.abs(S) < noise_mean + noise_level * noise_std] = 0
-    # 应用滤波器
+
   filtered_S = filter_ * S
-    # 反转傅里叶变换
+
   filtered_y = librosa.istft(filtered_S)
-    # 保存降噪后的音频文件
+
   sf.write(filename + "denoise.wav", filtered_y, sr)
 
   return filename + "denoise.wav"
@@ -390,8 +376,8 @@ with app:
     gr.Markdown("## <center>🌟 - 训练3分钟，推理10秒钟，中英真实拟声 </center>")
     gr.Markdown("### <center>🌊 - 基于SambertHifiGan项目修改而来，添加两种降噪功能、模型管理功能等")
 
-    with gr.Tabs(): # 添加一个 gr.Tabs() 组件
-        with gr.TabItem("一键训练"): # 创建一个 gr.TabItem() 组件，命名为 "训练和推理"
+    with gr.Tabs(): 
+        with gr.TabItem("一键训练"): 
             with gr.Row():
               with gr.Column():
                 inp1 = gr.Audio(type="filepath", sources="upload", label="方案一：请从本地上传一段语音")
@@ -408,12 +394,12 @@ with app:
               btn1 = gr.Button("1.标注数据")
               btn2 = gr.Button("2.开始训练")
               btn3 = gr.Button("3.一键推理", variant="primary")
-              btn4 = gr.Button("4.保存模型", variant="primary") # 添加一个保存模型的按钮
+              btn4 = gr.Button("4.保存模型", variant="primary") 
           
             btn1.click(auto_label, [inp1, inp_micro], out1)
             btn2.click(train, inp2, out2)
             btn3.click(infer, inp3, out3)
-            btn4.click(save_model, out1, out4) # 保存模型到 trained_model 文件夹
+            btn4.click(save_model, out1, out4) 
             with gr.Accordion("📒 训练教程", open=True):
               _ = f""" 如何开始训练: 
                   * 第一步，选择 [方案一] 或 [方案二] 上传一分钟左右的音频，注意要吐字清晰、感情饱满、音色纯净不含杂音
@@ -431,18 +417,18 @@ with app:
         with gr.TabItem("声音合成"): 
             with gr.Row():
               with gr.Column():
-                inp21 = gr.Dropdown(label="请选择一个模型", choices=os.listdir(trained_model)) # 创建一个 gr.Dropdown() 组件，列出 trained_model 文件夹中的模型
+                inp21 = gr.Dropdown(label="请选择一个模型", choices=os.listdir(trained_model)) 
                 inp22 = gr.Slider(label="降噪强度(为0时不降噪)", minimum=0, maximum=3, value=2)
               with gr.Column():
                 inp23 = gr.Textbox(label="请在这里填写您想合成的文本", placeholder="想说却还没说的 还很多...", lines=3,  interactive=True)
               with gr.Column():
                 out21 = gr.Audio(type="filepath", label="为您合成的专属音频", interactive=False)
             with gr.Row():
-              btn21 = gr.Button("刷新模型列表") # 添加一个刷新按钮
-              btn22 = gr.Button("一键推理", variant="primary") # 添加一个推理按钮
+              btn21 = gr.Button("刷新模型列表") 
+              btn22 = gr.Button("一键推理", variant="primary") 
 
             btn21.click(update_model_dropdown, inp21, inp21)
-            btn22.click(infer_custom, [inp21, inp23, inp22], out21) # 根据选择的模型和输入的文本进行推理
+            btn22.click(infer_custom, [inp21, inp23, inp22], out21) 
             with gr.Accordion("📒 推理教程", open=True):
               _ = f""" 如何推理声音: 
                   * 第一步，选择一个你想要使用的模型，如果训练后保存的模型无法找到请点击“刷新模型列表”
@@ -457,14 +443,14 @@ with app:
         with gr.TabItem("模型修改"): 
             with gr.Row():
               with gr.Column():
-                inp31 = gr.Dropdown(label="选择重命名的模型", choices=os.listdir(trained_model)) # 创建一个 gr.Dropdown() 组件，列出 trained_model 文件夹中的模型
+                inp31 = gr.Dropdown(label="选择重命名的模型", choices=os.listdir(trained_model)) 
               with gr.Column():
                 inp32 = gr.Textbox(label="输入模型命名", placeholder="新名称", lines=1,  interactive=True)
               with gr.Column():    
                 out31 = gr.Textbox(label="保存情况", lines=1, interactive=False)
             with gr.Row():
-              btn31 = gr.Button("刷新模型列表") # 添加一个刷新按钮
-              btn32 = gr.Button("重命名", variant="primary") # 重命名模型
+              btn31 = gr.Button("刷新模型列表") 
+              btn32 = gr.Button("重命名", variant="primary") 
 
             btn31.click(update_model_dropdown, inp31, inp31)
             btn32.click(rename_model, [inp31, inp32], out31)
@@ -504,7 +490,7 @@ with app:
                   """
               gr.Markdown(dedent(_))            
         
-        with gr.TabItem("缓存清理"): # 创建一个 gr.Blocks() 组件，命名为 "加载和推理"
+        with gr.TabItem("缓存清理"): 
             with gr.Row():
               with gr.Column():
                 gr.Markdown("### <center>注意，这会清除[一键训练]界面生成的所有数据")
@@ -513,9 +499,9 @@ with app:
               with gr.Column():
                 out97 = gr.Textbox(label="", lines=1, interactive=False)
                 btn91 = gr.Button("保存当前模型", ) 
-                btn92 = gr.Button("清空缓存数据", variant="primary") # 清空缓存
+                btn92 = gr.Button("清空缓存数据", variant="primary") 
             
-            btn91.click(save_model, out1, out97) # 保存模型到 trained_model 文件夹
+            btn91.click(save_model, out1, out97) 
             btn92.click(clear_cache, out1, out97)
 
 
