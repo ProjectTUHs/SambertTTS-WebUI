@@ -122,33 +122,69 @@ import shutil
 import datetime
 
 def save_model(worked_dir,dest_dir):
-    worked_dir = "/home/user/app/pretrain_work_dir"
-    dest_dir = "/home/user/app/trained_model"
-    # worked_dir: 临时工作目录
-    # dest_dir: 目标存储目录
+    worked_dir = "/home/yiho/Personal-TTS-v3/pretrain_work_dir"
+    dest_dir = "/home/yiho/Personal-TTS-v3/trained_model"
+
     if os.listdir(worked_dir): 
 
         now = datetime.datetime.now()
-
+        
         date_str = now.strftime("%Y%m%d%H%M%S")
-
+        
         dest_folder = os.path.join(dest_dir, date_str)
-
+        
         shutil.copytree(worked_dir, dest_folder)
 
-        shutil.rmtree("/home/user/app/output_training_data")
-        shutil.rmtree("/home/user/app/pretrain_work_dir")
-        shutil.rmtree("/home/user/app/test_wavs")
+                # List of files and directories to delete
+        files_to_delete = [
+            "tmp_voc",
+            "tmp_am/ckpt/checkpoint_2400000.pth",
+            "orig_model/description",
+            "orig_model/.mdl",
+            "orig_model/.msc",
+            "orig_model/README.md",
+            "orig_model/resource",
+            "orig_model/description",
+            "orig_model/basemodel_16k/sambert",
+            "orig_model/basemodel_16k/speaker_embedding",
+            "data/duration",
+            "data/energy",
+            "data/f0",
+            "data/frame_energy",
+            "data/frame_f0",
+            "data/frame_uv",
+            "data/mel",
+            "data/raw_duration",
+            "data/wav",
+            "data/am_train.lst",
+            "data/am_valid.lst",
+            "data/badlist.txt",
+            "data/raw_metafile.txt",
+            "data/Script.xml",
+            "data/train.lst",
+            "data/valid.lst",
+            "data/se/0_*"
+        ]
 
-        os.mkdir("/home/user/app/output_training_data")
-        os.mkdir("/home/user/app/pretrain_work_dir")
-        os.mkdir("/home/user/app/test_wavs")
-
+        for item in files_to_delete:
+            item_path = os.path.join(dest_folder, item)
+            if os.path.exists(item_path):
+                if os.path.isdir(item_path):
+                    shutil.rmtree(item_path)
+                else:
+                    os.remove(item_path)
+        
+        shutil.rmtree("/home/yiho/Personal-TTS-v3/output_training_data")
+        shutil.rmtree("/home/yiho/Personal-TTS-v3/pretrain_work_dir")
+        shutil.rmtree("/home/yiho/Personal-TTS-v3/test_wavs")
+        
+        os.mkdir("/home/yiho/Personal-TTS-v3/output_training_data")
+        os.mkdir("/home/yiho/Personal-TTS-v3/pretrain_work_dir")
+        os.mkdir("/home/yiho/Personal-TTS-v3/test_wavs")
+        
         return f"模型已成功保存为 {date_str}"
     else: 
         return "保存失败，模型已保存或已被清除"
-
-
 
 
 import random
