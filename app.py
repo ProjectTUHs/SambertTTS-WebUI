@@ -122,8 +122,8 @@ import shutil
 import datetime
 
 def save_model(worked_dir,dest_dir):
-    worked_dir = "/home/yiho/Personal-TTS-v3/pretrain_work_dir"
-    dest_dir = "/home/yiho/Personal-TTS-v3/trained_model"
+    worked_dir = "/home/user/app/pretrain_work_dir"
+    dest_dir = "/home/user/app/trained_model"
 
     if os.listdir(worked_dir): 
 
