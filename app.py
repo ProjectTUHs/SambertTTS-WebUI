@@ -174,13 +174,13 @@ def save_model(worked_dir,dest_dir):
                 else:
                     os.remove(item_path)
         
-        shutil.rmtree("/home/yiho/Personal-TTS-v3/output_training_data")
-        shutil.rmtree("/home/yiho/Personal-TTS-v3/pretrain_work_dir")
-        shutil.rmtree("/home/yiho/Personal-TTS-v3/test_wavs")
+        shutil.rmtree("/home/user/app/output_training_data")
+        shutil.rmtree("/home/user/app/pretrain_work_dir")
+        shutil.rmtree("/home/user/app/test_wavs")
         
-        os.mkdir("/home/yiho/Personal-TTS-v3/output_training_data")
-        os.mkdir("/home/yiho/Personal-TTS-v3/pretrain_work_dir")
-        os.mkdir("/home/yiho/Personal-TTS-v3/test_wavs")
+        os.mkdir("/home/user/app/output_training_data")
+        os.mkdir("/home/user/app/pretrain_work_dir")
+        os.mkdir("/home/user/app/test_wavs")
         
         return f"模型已成功保存为 {date_str}"
     else: 
